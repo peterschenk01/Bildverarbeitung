@@ -6,6 +6,7 @@ import ij.gui.Line;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Polygon;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -43,9 +44,52 @@ public class BV2 implements PlugInFilter {
         //ip_blue.translate(-18, -55);
         //ip_red.translate(18, 55);
         
+        int[] point_x = new int[10];
+        int[] point_y = new int[10];
+        Roi[] windows = new Roi[10];
         for(int i = 0; i < 10; i++) {
-            addCrossOverlay(ThreadLocalRandom.current().nextInt(ip_blue.getWidth() / 4, 3 * (ip_blue.getWidth() / 4) + 1), ThreadLocalRandom.current().nextInt(ip_blue.getHeight() / 4, 3 * (ip_blue.getHeight() / 4) + 1));
+            point_x[i] = ThreadLocalRandom.current().nextInt(ip_blue.getWidth() / 4, 3 * (ip_blue.getWidth() / 4) + 1);
+            point_y[i] = ThreadLocalRandom.current().nextInt(ip_blue.getHeight() / 4, 3 * (ip_blue.getHeight() / 4) + 1);
+            windows[i] = new Roi(point_x[i] - 12, point_y[i] - 12, 25, 25);
+            addRectangleToOverlay(windows[i]);
+            addCrossToOverlay(point_x[i], point_y[i]);
         }
+        
+        Point[] windowPoints = windows[0].getContainedPoints();
+        byte[] windowPixels = new byte[windowPoints.length];
+        for(int i = 0; i < windowPoints.length; i++) {
+        	windowPixels[i] = (byte) ip_blue.getPixel(windowPoints[i].x, windowPoints[i].y);
+        }
+        
+        Roi searchArea = new Roi(point_x[0] - 25, point_y[0] - 90, 50, 180);
+        Point[] searchPoints = searchArea.getContainedPoints();
+        
+        Roi pointWindow = new Roi(searchPoints[0].x - 12, searchPoints[0].y - 12, 25, 25);
+        Point[] pointWindowPoints = pointWindow.getContainedPoints();
+        byte[] pointWindowPixels = new byte[pointWindowPoints.length];
+        for(int i = 0; i < pointWindowPoints.length; i++) {
+        	pointWindowPixels[i] = (byte) ip_green.getPixel(pointWindowPoints[i].x, pointWindowPoints[i].y);
+        }
+        
+        byte mittelwertBlue = 0;
+        for(int i = 0; i < windowPixels.length; i++) {
+        	mittelwertBlue = (byte) (mittelwertBlue + windowPixels[i]);
+        }
+        mittelwertBlue = (byte) (mittelwertBlue / windowPixels.length);
+        
+        byte mittelwertGreen = 0;
+        for(int i = 0; i < windowPixels.length; i++) {
+        	mittelwertGreen = (byte) (mittelwertGreen + windowPixels[i]);
+        }
+        mittelwertGreen = (byte) (mittelwertGreen / windowPixels.length);
+        
+        byte d = 0;
+        for(int i = 0; i < windowPixels.length; i++) {
+        	d = (byte) (d + (((windowPixels[i] - mittelwertBlue) - (pointWindowPixels[i] - mittelwertGreen))) ^ 2);
+        }
+        
+        System.out.println(d);
+        
         showOverlay(ip_blue, myOverlay, "Overlay");
         
         // Bilder zu einem Farbbild zusammenfügen
@@ -78,7 +122,7 @@ public class BV2 implements PlugInFilter {
     	IJ.runPlugIn(image, "BV2", "");
      }
      
-     void addCrossOverlay(int x, int y) {
+     void addCrossToOverlay(int x, int y) {
     	 Line line1 = new Line(x, y - 50, x, y + 50);
     	 Line line2 = new Line(x - 50, y, x + 50, y);
     	 line1.setStrokeColor(Color.MAGENTA);
@@ -87,6 +131,12 @@ public class BV2 implements PlugInFilter {
     	 line2.setStrokeWidth(1);
     	 myOverlay.add(line1);
     	 myOverlay.add(line2);
+     }
+     
+     void addRectangleToOverlay(Roi rectangle) {
+     	rectangle.setStrokeColor(Color.GREEN);
+ 		rectangle.setStrokeWidth(2);
+ 		myOverlay.add(rectangle);
      }
      
      static void showOverlay(ImageProcessor ip, Overlay myOverlay, String title) {
