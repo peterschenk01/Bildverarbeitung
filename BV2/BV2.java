@@ -51,22 +51,22 @@ public class BV2 implements PlugInFilter {
         long[][] asb_green_squared = asb_squared(ip_green);
         long[][] asb_red_squared = asb_squared(ip_red);
         
-        Point[] point = new Point[100];
-        Point[] correspondingPoint_green = new Point[100];
-        Point[] correspondingPoint_red = new Point[100];
+        Point[] point = new Point[10];
+        Point[] correspondingPoint_green = new Point[point.length];
+        Point[] correspondingPoint_red = new Point[point.length];
         
-        int[] verschiebungsvektorBlueGreen_x = new int[100];
-        int[] verschiebungsvektorBlueGreen_y = new int[100];
+        int[] verschiebungsvektorBlueGreen_x = new int[point.length];
+        int[] verschiebungsvektorBlueGreen_y = new int[point.length];
 
-        int[] verschiebungsvektorBlueRed_x = new int[100];
-        int[] verschiebungsvektorBlueRed_y = new int[100];
+        int[] verschiebungsvektorBlueRed_x = new int[point.length];
+        int[] verschiebungsvektorBlueRed_y = new int[point.length];
         
         for(int i = 0; i < point.length; i++) {
             // Zufallspunkte
         	point[i] = new Point(ThreadLocalRandom.current().nextInt(ip_blue.getWidth() / 4, 3 * (ip_blue.getWidth() / 4) + 1), 
             						ThreadLocalRandom.current().nextInt(ip_blue.getHeight() / 4, 3 * (ip_blue.getHeight() / 4) + 1));
             
-        	// korresponierende Punkte in den Grün und Rot Bildern
+        	// korrespondierende Punkte in den Grün und Rot Bildern
             correspondingPoint_green[i] = findCorrelation(point[i], ip_blue, ip_green, asb_blue, asb_blue_squared, asb_green, asb_green_squared);
             correspondingPoint_red[i] = findCorrelation(point[i], ip_blue, ip_red, asb_blue, asb_blue_squared, asb_red, asb_red_squared);
             
@@ -88,9 +88,9 @@ public class BV2 implements PlugInFilter {
             					verschiebungsvektorBlueRed_y[i]);
         }
         
-        //showOverlay(ip_blue, myOverlayBlue, "Overlay Blue");
-        //showOverlay(ip_green, myOverlayGreen, "Overlay Green");
-        //showOverlay(ip_red, myOverlayRed, "Overlay Red");
+        showOverlay(ip_blue, myOverlayBlue, "Overlay Blue");
+        showOverlay(ip_green, myOverlayGreen, "Overlay Green");
+        showOverlay(ip_red, myOverlayRed, "Overlay Red");
         
         // Verschieben der Grün- und Rotbilder
         ip_green.translate(verschiebungsvektorBlueGreen_x[5], verschiebungsvektorBlueGreen_y[5]);
@@ -108,7 +108,7 @@ public class BV2 implements PlugInFilter {
        
         System.out.println(ende - start); // Ausgeben der Laufzeit
        
-        //colorImage.show();
+        colorImage.show();
     }
     
     public static void main(String[] args) {
@@ -144,7 +144,7 @@ public class BV2 implements PlugInFilter {
         Point[] searchPoints = searchArea.getContainedPoints();
         
         Point correlation = searchPoints[0];
-        double check = 1.0;
+        double check = -1.0;
         
         for(int i = 0; i < searchPoints.length; i++) {
         	// Benötigte Werte des Suchpunkts für Korrelationsberechnung
@@ -166,7 +166,7 @@ public class BV2 implements PlugInFilter {
             // Korrelation c
             double c = ((sum / 625.0) - (mittelwert * mittelwert_corr)) / (standardAbweichung * standardAbweichung_corr);
             
-            if(c < check) {
+            if(c > check) {
             	check = c;
             	correlation = searchPoints[i];
             }
